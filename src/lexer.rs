@@ -7,13 +7,13 @@ pub enum TokenType {
     RParen,
     Union,
     Star,
-    EOF
+    EOF,
 }
 
 #[derive(Clone, Debug)]
 pub struct Token {
     ty: TokenType,
-    pos: Position
+    pos: Position,
 }
 
 impl Token {
@@ -24,7 +24,7 @@ impl Token {
     fn eof(pos: Position) -> Self {
         Self {
             ty: TokenType::EOF,
-            pos
+            pos,
         }
     }
 
@@ -40,7 +40,7 @@ impl Token {
 pub struct Lexer {
     source: Vec<char>,
     tokens: Vec<Token>,
-    look: usize
+    look: usize,
 }
 
 impl Lexer {
@@ -49,7 +49,7 @@ impl Lexer {
         Self {
             source,
             tokens: Vec::new(),
-            look: 0
+            look: 0,
         }
     }
 
@@ -82,7 +82,7 @@ impl Lexer {
                 ')' => TokenType::RParen,
                 '|' => TokenType::Union,
                 '*' => TokenType::Star,
-                c => TokenType::Character(c)
+                c => TokenType::Character(c),
             };
             let token = Token::new(ty, pos);
             self.tokens.push(token);

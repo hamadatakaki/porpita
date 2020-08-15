@@ -1,19 +1,18 @@
 use super::lexer::{Position, Token, TokenType};
 
 #[derive(Clone, Debug)]
-enum ASTNode {
+pub enum ASTNode {
     Epsilon,
     Character(char),
     Concat(Box<AST>, Box<AST>),
     Union(Box<AST>, Box<AST>),
     Star(Box<AST>),
-    EOF
 }
 
 #[derive(Clone, Debug)]
 pub struct AST {
     node: ASTNode,
-    pos: Position
+    pos: Position,
 }
 
 impl AST {
@@ -55,18 +54,53 @@ impl AST {
         Self::new(node, pos)
     }
 
+    pub fn ast_node(&self) -> ASTNode {
+        self.node.clone()
+    }
+
     fn position(&self) -> Position {
         self.pos
+    }
+
+    fn to_display(&self, indent: usize) {
+        for _ in 0..indent {
+            print!(" ");
+        }
+        match self.ast_node() {
+            ASTNode::Character(c) => println!("<char: {}>", c),
+            ASTNode::Epsilon => println!("<epsilon>"),
+            ASTNode::Concat(r1, r2) => {
+                println!("<concat>");
+                r1.to_display(indent + 1);
+                r2.to_display(indent + 1);
+            }
+            ASTNode::Union(r1, r2) => {
+                println!("<union>");
+                r1.to_display(indent + 1);
+                r2.to_display(indent + 1);
+            }
+            ASTNode::Star(r) => {
+                println!("<star>");
+                r.to_display(indent + 1);
+            }
+        }
+    }
+}
+
+impl std::fmt::Display for AST {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.to_display(0);
+        write!(f, "")
     }
 }
 
 pub struct Parser {
     tokens: Vec<Token>,
-    look: usize
+    look: usize,
 }
 
 impl Parser {
-    fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: Vec<Token>) -> Self {
         Self { tokens, look: 0 }
     }
 
@@ -86,7 +120,7 @@ impl Parser {
         self.look_at().token_type() == ty
     }
 
-    fn parse(&mut self) -> AST {
+    pub fn parse(&mut self) -> AST {
         self.expr()
     }
 
@@ -123,12 +157,9 @@ impl Parser {
                 let seq = self.seq();
                 AST::concat(term, seq)
             }
-            TokenType::RParen | TokenType::Union | TokenType::EOF => {
-                term
-            }
-            _ => panic!()
+            TokenType::RParen | TokenType::Union | TokenType::EOF => term,
+            _ => panic!(),
         }
-
     }
 
     fn term(&mut self) -> AST {
@@ -139,7 +170,7 @@ impl Parser {
                 self.forward();
                 AST::star(factor)
             }
-            _ => factor
+            _ => factor,
         }
     }
 
@@ -160,7 +191,7 @@ impl Parser {
                 self.forward();
                 AST::character(c, at)
             }
-            _ => panic!()
+            _ => panic!(),
         }
     }
 }
@@ -168,10 +199,10 @@ impl Parser {
 #[test]
 fn debug_parse() {
     use super::lexer::Lexer;
-    let mut lexer = Lexer::new("a(b|c)*a");
+    let mut lexer = Lexer::new("aa*a");
     lexer.tokenize();
     let tokens = lexer.tokens();
     let mut parser = Parser::new(tokens);
     let ast = parser.parse();
-    println!("{:?}", ast);
+    println!("{}", ast);
 }
